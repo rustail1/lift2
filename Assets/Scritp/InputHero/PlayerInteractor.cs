@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
 public class PlayerInteractor : MonoBehaviour
@@ -7,6 +8,10 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private Camera _camera;
     [SerializeField] private float _distance = 2.5f;
     [SerializeField] private LayerMask _interactionMask = ~0;
+
+    [Header("Inspection Mode")]
+    [Tooltip("В inspect mode луч взаимодействия идёт из позиции мыши, а не из центра экрана. Нужно для крупного плана панелей.")]
+    [SerializeField] private bool _useMousePositionInInspection = true;
 
     [Header("Anti Flicker")]
     [Tooltip("Если включено, вместо тонкого Raycast используется SphereCast. Это убирает мигание интерактива из-за дыхания/покачивания камеры.")]
@@ -19,6 +24,7 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private float _lostTargetGraceTime = 0.15f;
 
     [Header("Debug")]
+    [SerializeField] private bool _interactionEnabled = true;
     [SerializeField] private string _currentInteractionText;
     [SerializeField] private bool _hasCurrent;
     [SerializeField] private bool _isUsingGraceTarget;
@@ -39,6 +45,7 @@ public class PlayerInteractor : MonoBehaviour
         if (_camera == null)
             _camera = Camera.main != null ? Camera.main : GetComponentInChildren<Camera>();
 
+        _interactionEnabled = true;
         _current = null;
         _lastValid = null;
         _lostTargetTimer = 0f;
@@ -50,13 +57,28 @@ public class PlayerInteractor : MonoBehaviour
     // Вызывается из LiftGameUpdateRunner. Update специально не используется.
     public void Tick()
     {
+        if (!_interactionEnabled)
+        {
+            ClearCurrentTarget();
+            UpdateInteractionUI();
+            return;
+        }
+
         UpdateCurrentInteractable();
         UpdateInteractionUI();
     }
 
+    public void SetInteractionEnabled(bool enabled)
+    {
+        _interactionEnabled = enabled;
+
+        if (!enabled)
+            ClearCurrentTarget();
+    }
+
     public void InteractDown()
     {
-        if (_current == null)
+        if (!_interactionEnabled || _current == null)
             return;
 
         _current.InteractDown();
@@ -64,6 +86,9 @@ public class PlayerInteractor : MonoBehaviour
 
     public void InteractUp()
     {
+        if (!_interactionEnabled)
+            return;
+
         _current?.InteractUp();
     }
 
@@ -106,7 +131,23 @@ public class PlayerInteractor : MonoBehaviour
         if (_camera == null)
             return null;
 
-        Ray ray = new Ray(_camera.transform.position, _camera.transform.forward);
+        Ray ray;
+
+        InspectionViewService inspection = InspectionViewService.Instance;
+        bool useMouseRay = _useMousePositionInInspection
+            && inspection != null
+            && inspection.IsInspecting
+            && Mouse.current != null;
+
+        if (useMouseRay)
+        {
+            Vector2 mousePosition = Mouse.current.position.ReadValue();
+            ray = _camera.ScreenPointToRay(mousePosition);
+        }
+        else
+        {
+            ray = new Ray(_camera.transform.position, _camera.transform.forward);
+        }
 
         RaycastHit hit;
         bool hasHit;
@@ -137,6 +178,16 @@ public class PlayerInteractor : MonoBehaviour
             return null;
 
         return hit.collider.GetComponentInParent<IInteractable>();
+    }
+
+    private void ClearCurrentTarget()
+    {
+        _current = null;
+        _lastValid = null;
+        _lostTargetTimer = 0f;
+        _hasCurrent = false;
+        _isUsingGraceTarget = false;
+        _currentInteractionText = string.Empty;
     }
 
     private void UpdateInteractionUI()

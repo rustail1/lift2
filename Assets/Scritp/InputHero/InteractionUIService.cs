@@ -14,6 +14,9 @@ public class InteractionUIService : MonoBehaviour
     [Tooltip("Активный прицел. Активен, когда игрок смотрит на интерактивный объект.")]
     [SerializeField] private GameObject _activeCrosshair;
 
+    [Tooltip("Если включено, оба прицела скрыты. Используется в inspect mode / крупном плане панели.")]
+    [SerializeField] private bool _suppressCrosshair;
+
     [Header("Text")]
     [Tooltip("Текст подсказки. Используется TextMeshProUGUI / TMP_Text.")]
     [SerializeField] private TMP_Text _interactionText;
@@ -42,6 +45,7 @@ public class InteractionUIService : MonoBehaviour
     public void Initialize()
     {
         Instance = this;
+        _suppressCrosshair = false;
         SetInteractionTarget(false, string.Empty);
         SetHoldProgress(0f);
         SetMashProgress(0f);
@@ -65,17 +69,26 @@ public class InteractionUIService : MonoBehaviour
         _hasTarget = active;
         _currentText = active ? text : string.Empty;
 
-        if (_normalCrosshair != null)
-            _normalCrosshair.SetActive(!active);
-
-        if (_activeCrosshair != null)
-            _activeCrosshair.SetActive(active);
+        RefreshCrosshair();
 
         if (_interactionText != null)
         {
             _interactionText.gameObject.SetActive(active && !string.IsNullOrWhiteSpace(text));
             _interactionText.text = _currentText;
         }
+    }
+
+    // Используй это для крупного плана панели: true = скрыть оба прицела, false = вернуть обычное поведение.
+    public void SetCrosshairSuppressed(bool suppressed)
+    {
+        _suppressCrosshair = suppressed;
+        RefreshCrosshair();
+    }
+
+    // Старое удобное API: true = показать, false = скрыть.
+    public void SetCrosshairVisible(bool visible)
+    {
+        SetCrosshairSuppressed(!visible);
     }
 
     public void ShowHint(string text)
@@ -98,6 +111,15 @@ public class InteractionUIService : MonoBehaviour
     public void SetMashProgress(float value)
     {
         SetFill(_mashProgressFill, value);
+    }
+
+    private void RefreshCrosshair()
+    {
+        if (_normalCrosshair != null)
+            _normalCrosshair.SetActive(!_suppressCrosshair && !_hasTarget);
+
+        if (_activeCrosshair != null)
+            _activeCrosshair.SetActive(!_suppressCrosshair && _hasTarget);
     }
 
     private void HideHintNow()

@@ -1,31 +1,61 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class LiftGameUpdateRunner : MonoBehaviour
 {
     [Header("Auto")]
+    [Tooltip("Если включено, менеджер пересоберёт ссылки при старте. Если выключено, он всё равно соберёт их один раз, если список ещё пустой.")]
     [SerializeField] private bool _collectOnStart = true;
 
-    [Header("UI")]
-    [SerializeField] private InteractionUIService[] _interactionUis;
-    [SerializeField] private SubtitleUIService[] _subtitleUis;
-    [SerializeField] private DialogueService[] _dialogueServices;
+    // Runtime-only массивы. Не сериализуем их, чтобы Unity Inspector не падал на больших списках во время Play Mode.
+    private InteractionUIService[] _interactionUis = Array.Empty<InteractionUIService>();
+    private SubtitleUIService[] _subtitleUis = Array.Empty<SubtitleUIService>();
+    private DialogueService[] _dialogueServices = Array.Empty<DialogueService>();
+    private DocumentViewerService[] _documentViewers = Array.Empty<DocumentViewerService>();
+    private ScreenFadeService[] _screenFades = Array.Empty<ScreenFadeService>();
+    private InspectionViewService[] _inspectionViewServices = Array.Empty<InspectionViewService>();
 
-    [Header("Player Components")]
-    [SerializeField] private PlayerLook[] _playerLooks;
-    [SerializeField] private FpsCharacter[] _characters;
-    [SerializeField] private CameraZoomController[] _cameraZooms;
-    [SerializeField] private FlashlightController[] _flashlights;
-    [SerializeField] private CameraMotionController[] _cameraMotions;
-    [SerializeField] private FlashlightSwayController[] _flashlightSways;
-    [SerializeField] private PlayerInteractor[] _playerInteractors;
+    private PlayerLook[] _playerLooks = Array.Empty<PlayerLook>();
+    private FpsCharacter[] _characters = Array.Empty<FpsCharacter>();
+    private CameraZoomController[] _cameraZooms = Array.Empty<CameraZoomController>();
+    private FlashlightController[] _flashlights = Array.Empty<FlashlightController>();
+    private CameraMotionController[] _cameraMotions = Array.Empty<CameraMotionController>();
+    private FlashlightSwayController[] _flashlightSways = Array.Empty<FlashlightSwayController>();
+    private PlayerInteractor[] _playerInteractors = Array.Empty<PlayerInteractor>();
 
-    [Header("World Components")]
-    [SerializeField] private InteractableObject[] _interactables;
+    private InteractableObject[] _interactables = Array.Empty<InteractableObject>();
+    private TriggerEventAfterDelay[] _triggerEventAfterDelays = Array.Empty<TriggerEventAfterDelay>();
+    private TriggerEventOnStart[] _triggerEventOnStarts = Array.Empty<TriggerEventOnStart>();
+    private EmergencyTimerService[] _emergencyTimers = Array.Empty<EmergencyTimerService>();
+    private ElevatorEffectsService[] _elevatorEffects = Array.Empty<ElevatorEffectsService>();
 
-    [Header("Event Reactions")]
-    [SerializeField] private TriggerEventAfterDelay[] _triggerEventAfterDelays;
-    [SerializeField] private TriggerEventOnStart[] _triggerEventOnStarts;
+    [Header("Debug")]
+    [SerializeField] private bool _hasCollected;
+
+    [Header("Collected Counts / UI")]
+    [SerializeField] private int _interactionUisCount;
+    [SerializeField] private int _subtitleUisCount;
+    [SerializeField] private int _dialogueServicesCount;
+    [SerializeField] private int _documentViewersCount;
+    [SerializeField] private int _screenFadesCount;
+    [SerializeField] private int _inspectionViewServicesCount;
+
+    [Header("Collected Counts / Player")]
+    [SerializeField] private int _playerLooksCount;
+    [SerializeField] private int _charactersCount;
+    [SerializeField] private int _cameraZoomsCount;
+    [SerializeField] private int _flashlightsCount;
+    [SerializeField] private int _cameraMotionsCount;
+    [SerializeField] private int _flashlightSwaysCount;
+    [SerializeField] private int _playerInteractorsCount;
+
+    [Header("Collected Counts / World")]
+    [SerializeField] private int _interactablesCount;
+    [SerializeField] private int _triggerEventAfterDelaysCount;
+    [SerializeField] private int _triggerEventOnStartsCount;
+    [SerializeField] private int _emergencyTimersCount;
+    [SerializeField] private int _elevatorEffectsCount;
 
     private void Reset()
     {
@@ -34,12 +64,15 @@ public class LiftGameUpdateRunner : MonoBehaviour
 
     private void Start()
     {
-        if (_collectOnStart)
+        if (_collectOnStart || !_hasCollected)
             CollectFromScene();
     }
 
     private void Update()
     {
+        if (!_hasCollected)
+            CollectFromScene();
+
         float deltaTime = Time.deltaTime;
 
         // 1. UI timers: короткие сообщения, ошибки и т.п.
@@ -56,6 +89,21 @@ public class LiftGameUpdateRunner : MonoBehaviour
         foreach (SubtitleUIService subtitleUi in _subtitleUis)
             if (subtitleUi != null)
                 subtitleUi.Tick(deltaTime);
+
+        // 1.7. Документы закрываются через Esc/ЛКМ только через общий UpdateRunner.
+        foreach (DocumentViewerService documentViewer in _documentViewers)
+            if (documentViewer != null)
+                documentViewer.Tick(deltaTime);
+
+        // 1.8. Fade-переходы обновляются централизованно.
+        foreach (ScreenFadeService screenFade in _screenFades)
+            if (screenFade != null)
+                screenFade.Tick(deltaTime);
+
+        // 1.9. Inspect / close-up камера для панелей и пазлов.
+        foreach (InspectionViewService inspectionViewService in _inspectionViewServices)
+            if (inspectionViewService != null)
+                inspectionViewService.Tick(deltaTime);
 
         // 2. Сначала поворот камеры/персонажа.
         foreach (PlayerLook playerLook in _playerLooks)
@@ -101,6 +149,16 @@ public class LiftGameUpdateRunner : MonoBehaviour
             if (triggerEventOnStart != null)
                 triggerEventOnStart.Tick(deltaTime);
 
+        // 8.6. Таймер аварии.
+        foreach (EmergencyTimerService emergencyTimer in _emergencyTimers)
+            if (emergencyTimer != null)
+                emergencyTimer.Tick(deltaTime);
+
+        // 8.7. Эффекты лифта: тряска, flicker.
+        foreach (ElevatorEffectsService elevatorEffect in _elevatorEffects)
+            if (elevatorEffect != null)
+                elevatorEffect.Tick(deltaTime);
+
         // 9. В конце обновляем raycast интеракции и UI подсказок.
         foreach (PlayerInteractor playerInteractor in _playerInteractors)
             if (playerInteractor != null)
@@ -110,20 +168,58 @@ public class LiftGameUpdateRunner : MonoBehaviour
     [ContextMenu("Collect From Scene")]
     public void CollectFromScene()
     {
-        _interactionUis = FindObjectsOfType<InteractionUIService>(true);
-        _subtitleUis = FindObjectsOfType<SubtitleUIService>(true);
-        _dialogueServices = FindObjectsOfType<DialogueService>(true);
+        _interactionUis = Collect<InteractionUIService>();
+        _subtitleUis = Collect<SubtitleUIService>();
+        _dialogueServices = Collect<DialogueService>();
+        _documentViewers = Collect<DocumentViewerService>();
+        _screenFades = Collect<ScreenFadeService>();
+        _inspectionViewServices = Collect<InspectionViewService>();
 
-        _playerLooks = FindObjectsOfType<PlayerLook>(true);
-        _characters = FindObjectsOfType<FpsCharacter>(true);
-        _cameraZooms = FindObjectsOfType<CameraZoomController>(true);
-        _flashlights = FindObjectsOfType<FlashlightController>(true);
-        _cameraMotions = FindObjectsOfType<CameraMotionController>(true);
-        _flashlightSways = FindObjectsOfType<FlashlightSwayController>(true);
-        _playerInteractors = FindObjectsOfType<PlayerInteractor>(true);
+        _playerLooks = Collect<PlayerLook>();
+        _characters = Collect<FpsCharacter>();
+        _cameraZooms = Collect<CameraZoomController>();
+        _flashlights = Collect<FlashlightController>();
+        _cameraMotions = Collect<CameraMotionController>();
+        _flashlightSways = Collect<FlashlightSwayController>();
+        _playerInteractors = Collect<PlayerInteractor>();
 
-        _interactables = FindObjectsOfType<InteractableObject>(true);
-        _triggerEventAfterDelays = FindObjectsOfType<TriggerEventAfterDelay>(true);
-        _triggerEventOnStarts = FindObjectsOfType<TriggerEventOnStart>(true);
+        _interactables = Collect<InteractableObject>();
+        _triggerEventAfterDelays = Collect<TriggerEventAfterDelay>();
+        _triggerEventOnStarts = Collect<TriggerEventOnStart>();
+        _emergencyTimers = Collect<EmergencyTimerService>();
+        _elevatorEffects = Collect<ElevatorEffectsService>();
+
+        _hasCollected = true;
+        RefreshCounts();
+    }
+
+    private static T[] Collect<T>() where T : UnityEngine.Object
+    {
+        T[] objects = FindObjectsOfType<T>(true);
+        return objects ?? Array.Empty<T>();
+    }
+
+    private void RefreshCounts()
+    {
+        _interactionUisCount = _interactionUis.Length;
+        _subtitleUisCount = _subtitleUis.Length;
+        _dialogueServicesCount = _dialogueServices.Length;
+        _documentViewersCount = _documentViewers.Length;
+        _screenFadesCount = _screenFades.Length;
+        _inspectionViewServicesCount = _inspectionViewServices.Length;
+
+        _playerLooksCount = _playerLooks.Length;
+        _charactersCount = _characters.Length;
+        _cameraZoomsCount = _cameraZooms.Length;
+        _flashlightsCount = _flashlights.Length;
+        _cameraMotionsCount = _cameraMotions.Length;
+        _flashlightSwaysCount = _flashlightSways.Length;
+        _playerInteractorsCount = _playerInteractors.Length;
+
+        _interactablesCount = _interactables.Length;
+        _triggerEventAfterDelaysCount = _triggerEventAfterDelays.Length;
+        _triggerEventOnStartsCount = _triggerEventOnStarts.Length;
+        _emergencyTimersCount = _emergencyTimers.Length;
+        _elevatorEffectsCount = _elevatorEffects.Length;
     }
 }
