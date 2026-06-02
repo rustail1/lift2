@@ -24,6 +24,9 @@ public class FpsCharacter : MonoBehaviour
     [SerializeField] private float _crouchCameraY = 1.0f;
     [SerializeField] private float _crouchTransitionSpeed = 10f;
 
+    [Header("Events")]
+    public AK.Wwise.Event myFootstep;
+
     [Header("Debug State")]
     [Tooltip("Только для просмотра в Inspector: сейчас игрок присел или нет.")]
     [SerializeField] private bool _isCrouching;
@@ -42,11 +45,17 @@ public class FpsCharacter : MonoBehaviour
     public Vector2 MoveInput => _moveInput;
     public float MoveInputMagnitude => _moveInput.magnitude;
 
+    //wwise
+    private bool footstepIsPlaying = false;
+    private float lastFootstepTime = 0f;
+
     // Вызывается из LiftGameInitializer. Awake специально не используется.
     public void Initialize()
     {
         if (_controller == null)
             _controller = GetComponent<CharacterController>();
+
+        lastFootstepTime = Time.time;
     }
 
     // Вызывается из LiftGameUpdateRunner. Update специально не используется.
@@ -160,6 +169,24 @@ public class FpsCharacter : MonoBehaviour
         motion.y = _verticalVelocity;
 
         _controller.Move(motion * Time.deltaTime);
+
+        if (!footstepIsPlaying)
+        {
+            myFootstep.Post(gameObject);
+            lastFootstepTime = Time.time;
+            footstepIsPlaying = true;
+        }
+        else
+        {
+            if (_walkSpeed > 1)
+            {
+                if (Time.time - lastFootstepTime > 500 / _walkSpeed * Time.time)
+                {
+                    footstepIsPlaying = false;
+                }
+            }
+        }
+
     }
 
     private void OnDrawGizmosSelected()

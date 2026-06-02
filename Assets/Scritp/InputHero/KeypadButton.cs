@@ -12,6 +12,9 @@ public class KeypadButton : MonoBehaviour, IInteractable
     [SerializeField] private string _interactionName = "Нажать";
     [SerializeField] private string _failText = "Панель сейчас недоступна.";
 
+    [Header("Events")]
+    public AK.Wwise.Event panel_button;
+
     [Header("Debug")]
     [SerializeField] private int _pressCount;
 
@@ -71,6 +74,7 @@ public class KeypadButton : MonoBehaviour, IInteractable
         {
             case KeypadButtonType.Digit:
                 _panel.PressDigit(_digit);
+                panel_button.Post(gameObject);
                 break;
             case KeypadButtonType.Enter:
                 _panel.Submit();

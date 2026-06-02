@@ -1170,6 +1170,10 @@ MonoBehaviour:
   _interactionName: "\u041D\u0430\u0436\u0430\u0442\u044C"
   _failText: "\u041F\u0430\u043D\u0435\u043B\u044C \u0441\u0435\u0439\u0447\u0430\u0441
     \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430."
+  panel_button:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
   _pressCount: 0
 --- !u!65 &272698846
 BoxCollider:
@@ -2006,6 +2010,10 @@ MonoBehaviour:
   _standingCameraY: 0
   _crouchCameraY: 0
   _crouchTransitionSpeed: 10
+  myFootstep:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 674b0a7a26b067d47a6496048b832e6b, type: 2}
   _isCrouching: 0
   _isGrounded: 0
   _movementEnabled: 1
@@ -3915,6 +3923,10 @@ MonoBehaviour:
   _interactionName: "\u041D\u0430\u0436\u0430\u0442\u044C"
   _failText: "\u041F\u0430\u043D\u0435\u043B\u044C \u0441\u0435\u0439\u0447\u0430\u0441
     \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430."
+  panel_button:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
   _pressCount: 0
 --- !u!65 &669199573
 BoxCollider:
@@ -4302,6 +4314,10 @@ MonoBehaviour:
   _interactionName: "\u041D\u0430\u0436\u0430\u0442\u044C"
   _failText: "\u041F\u0430\u043D\u0435\u043B\u044C \u0441\u0435\u0439\u0447\u0430\u0441
     \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430."
+  panel_button:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
   _pressCount: 0
 --- !u!65 &837283516
 BoxCollider:
@@ -4754,6 +4770,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1222869603}
   - component: {fileID: 1222869602}
+  - component: {fileID: 1222869604}
   m_Layer: 0
   m_Name: WwiseGlobal
   m_TagString: Untagged
@@ -4801,6 +4818,31 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1222869604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222869601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef284212e3a37c84990c3e32a91860d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AK.Wwise.Unity.MonoBehaviour::AkBank
+  triggerList: ae8d9d44
+  useOtherObject: 0
+  data:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 8bb518a36e00d8a4499b56c4b0163e3b, type: 2}
+  decodeBank: 0
+  overrideLoadSetting: 0
+  loadAsynchronous: 0
+  saveDecodedBank: 0
+  unloadTriggerList: 958ca0ea
+  bankNameInternal: 
+  valueGuidInternal: 
 --- !u!1 &1281660903
 GameObject:
   m_ObjectHideFlags: 0
@@ -5439,6 +5481,10 @@ MonoBehaviour:
   _interactionName: "\u041D\u0430\u0436\u0430\u0442\u044C"
   _failText: "\u041F\u0430\u043D\u0435\u043B\u044C \u0441\u0435\u0439\u0447\u0430\u0441
     \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430."
+  panel_button:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
   _pressCount: 0
 --- !u!65 &1560730035
 BoxCollider:
@@ -6120,6 +6166,10 @@ MonoBehaviour:
   _interactionName: "\u041D\u0430\u0436\u0430\u0442\u044C"
   _failText: "\u041F\u0430\u043D\u0435\u043B\u044C \u0441\u0435\u0439\u0447\u0430\u0441
     \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430."
+  panel_button:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: b69ec6417659fdb4399c7c58e2961869, type: 2}
   _pressCount: 0
 --- !u!65 &1882839772
 BoxCollider:
